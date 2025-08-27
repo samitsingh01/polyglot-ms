@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservices Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .service-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .user-service .service-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .product-service .service-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .order-service .service-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: auto;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #27ae60; }
+        .status-offline { background: #e74c3c; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .form-section {
+            margin: 20px 0;
+        }
+
+        .form-section h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .data-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .data-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-item:hover {
+            background: #e9ecef;
+        }
+
+        .data-info {
+            flex: 1;
+        }
+
+        .data-info h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .data-info p {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+
+        .order-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .order-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .order-meta span {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-overview {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card.users { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-card.products { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .stat-card.orders { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const API_BASE = 'http://100.27.190.117';
+
+        const Dashboard = () => {
+            const [users, setUsers] = useState([]);
+            const [products, setProducts] = useState([]);
+            const [orders, setOrders] = useState([]);
+            const [serviceStatus, setServiceStatus] = useState({
+                users: false,
+                products: false,
+                orders: false
+            });
+            const [loading, setLoading] = useState({});
+            const [alerts, setAlerts] = useState([]);
+            const [formData, setFormData] = useState({
+                user: { name: '', email: '' },
+                product: { name: '', description: '', price: '', stock: '' },
+                order: { user_id: '', product_id: '', quantity: '' }
+            });
+
+            const showAlert = (message, type = 'success') => {
+                const id = Date.now();
+                setAlerts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => {
+                    setAlerts(prev => prev.filter(alert => alert.id !== id));
+                }, 5000);
+            };
+
+            const checkServiceHealth = async () => {
+                const services = ['users', 'products', 'orders'];
+                const ports = { users: 3001, products: 3002, orders: 3003 };
+                
+                for (const service of services) {
+                    try {
+                        const response = await fetch(`${API_BASE}:${ports[service]}/health`);
+                        setServiceStatus(prev => ({ ...prev, [service]: response.ok }));
+                    } catch (error) {
+                        setServiceStatus(prev => ({ ...prev, [service]: false }));
+                    }
+                }
+            };
+
+            const fetchData = async () => {
+                try {
+                    const [usersRes, productsRes, ordersRes] = await Promise.all([
+                        fetch(`${API_BASE}:3001/api/users`).catch(() => ({ ok: false })),
+                        fetch(`${API_BASE}:3002/api/products`).catch(() => ({ ok: false })),
+                        fetch(`${API_BASE}:3003/api/orders`).catch(() => ({ ok: false }))
+                    ]);
+
+                    if (usersRes.ok) setUsers(await usersRes.json());
+                    if (productsRes.ok) setProducts(await productsRes.json());
+                    if (ordersRes.ok) setOrders(await ordersRes.json());
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
+            };
+
+            const createUser = async () => {
+                if (!formData.user.name || !formData.user.email) {
+                    showAlert('Please fill all user fields', 'error');
+                    return;
+                }
+
+                setLoading(prev => ({ ...prev, user: true }));
+                try {
+                    const response = await fetch(`${API_BASE}:3001/api/users`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData.user)
+                    });
+
+                    if (response.ok) {
+                        setFormData(prev => ({ ...prev, user: { name: '', email: '' } }));
+                        fetchData();
+                        showAlert('User created successfully!');
+                    } else {
+                        const error = await response.json();
+                        showAlert(error.error || 'Failed to create user', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Network error: ' + error.message, 'error');
+                } finally {
+                    setLoading(prev => ({ ...prev, user: false }));
+                }
+            };
+
+            const createProduct = async () => {
+                if (!formData.product.name || !formData.product.price) {
+                    showAlert('Please fill required product fields', 'error');
+                    return;
+                }
+
+                setLoading(prev => ({ ...prev, product: true }));
+                try {
+                    const response = await fetch(`${API_BASE}:3002/api/products`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...formData.product,
+                            price: parseFloat(formData.product.price),
+                            stock: parseInt(formData.product.stock) || 0
+                        })
+                    });
+
+                    if (response.ok) {
+                        setFormData(prev => ({ ...prev, product: { name: '', description: '', price: '', stock: '' } }));
+                        fetchData();
+                        showAlert('Product created successfully!');
+                    } else {
+                        const error = await response.json();
+                        showAlert(error.error || 'Failed to create product', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Network error: ' + error.message, 'error');
+                } finally {
+                    setLoading(prev => ({ ...prev, product: false }));
+                }
+            };
+
+            const createOrder = async () => {
+                if (!formData.order.user_id || !formData.order.product_id || !formData.order.quantity) {
+                    showAlert('Please fill all order fields', 'error');
+                    return;
+                }
+
+                setLoading(prev => ({ ...prev, order: true }));
+                try {
+                    const response = await fetch(`${API_BASE}:3003/api/orders`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: parseInt(formData.order.user_id),
+                            product_id: parseInt(formData.order.product_id),
+                            quantity: parseInt(formData.order.quantity)
+                        })
+                    });
+
+                    if (response.ok) {
+                        setFormData(prev => ({ ...prev, order: { user_id: '', product_id: '', quantity: '' } }));
+                        fetchData();
+                        showAlert('Order created successfully! Services are communicating perfectly!');
+                    } else {
+                        const error = await response.json();
+                        showAlert(error.error || 'Failed to create order', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Network error: ' + error.message, 'error');
+                } finally {
+                    setLoading(prev => ({ ...prev, order: false }));
+                }
+            };
+
+            const deleteItem = async (type, id) => {
+                const ports = { users: 3001, products: 3002, orders: 3003 };
+                const endpoints = { users: 'users', products: 'products', orders: 'orders' };
+                
+                try {
+                    const response = await fetch(`${API_BASE}:${ports[type]}/api/${endpoints[type]}/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        fetchData();
+                        showAlert(`${type.slice(0, -1)} deleted successfully!`);
+                    } else {
+                        showAlert(`Failed to delete ${type.slice(0, -1)}`, 'error');
+                    }
+                } catch (error) {
+                    showAlert('Network error: ' + error.message, 'error');
+                }
+            };
+
+            useEffect(() => {
+                checkServiceHealth();
+                fetchData();
+                const interval = setInterval(() => {
+                    checkServiceHealth();
+                    fetchData();
+                }, 10000);
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1><i className="fas fa-network-wired"></i> Microservices Dashboard</h1>
+                        <p>Managing User Service, Product Service & Order Service</p>
+                    </div>
+
+                    {alerts.map(alert => (
+                        <div key={alert.id} className={`alert alert-${alert.type}`}>
+                            {alert.message}
+                        </div>
+                    ))}
+
+                    <div className="stats-overview">
+                        <h2 style={{marginBottom: '20px', color: '#2c3e50'}}>
+                            <i className="fas fa-chart-bar"></i> System Overview
+                        </h2>
+                        <div className="stats-grid">
+                            <div className="stat-card users">
+                                <div className="stat-number">{users.length}</div>
+                                <div>Total Users</div>
+                            </div>
+                            <div className="stat-card products">
+                                <div className="stat-number">{products.length}</div>
+                                <div>Total Products</div>
+                            </div>
+                            <div className="stat-card orders">
+                                <div className="stat-number">{orders.length}</div>
+                                <div>Total Orders</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="services-grid">
+                        {/* User Service */}
+                        <div className="service-card user-service">
+                            <div className="service-header">
+                                <div className="service-icon">
+                                    <i className="fas fa-users"></i>
+                                </div>
+                                <div className="service-title">User Service</div>
+                                <div className={`status-indicator ${serviceStatus.users ? 'status-online' : 'status-offline'}`}></div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-plus"></i> Create New User</h3>
+                                <div className="form-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Full Name"
+                                        value={formData.user.name}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            user: { ...prev.user, name: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="email"
+                                        placeholder="Email Address"
+                                        value={formData.user.email}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            user: { ...prev.user, email: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <button 
+                                    className="btn btn-primary" 
+                                    onClick={createUser}
+                                    disabled={loading.user}
+                                >
+                                    {loading.user ? <span className="loading"></span> : <i className="fas fa-user-plus"></i>}
+                                    {loading.user ? ' Creating...' : ' Create User'}
+                                </button>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-list"></i> All Users ({users.length})</h3>
+                                <div className="data-list">
+                                    {users.map(user => (
+                                        <div key={user.id} className="data-item">
+                                            <div className="data-info">
+                                                <h4>{user.name}</h4>
+                                                <p>{user.email} • ID: {user.id}</p>
+                                            </div>
+                                            <button 
+                                                className="btn btn-danger"
+                                                onClick={() => deleteItem('users', user.id)}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {users.length === 0 && (
+                                        <div className="data-item">
+                                            <div className="data-info">
+                                                <p>No users found. Create your first user!</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Product Service */}
+                        <div className="service-card product-service">
+                            <div className="service-header">
+                                <div className="service-icon">
+                                    <i className="fas fa-box"></i>
+                                </div>
+                                <div className="service-title">Product Service</div>
+                                <div className={`status-indicator ${serviceStatus.products ? 'status-online' : 'status-offline'}`}></div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-plus"></i> Create New Product</h3>
+                                <div className="form-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Product Name"
+                                        value={formData.product.name}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            product: { ...prev.product, name: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <textarea
+                                        placeholder="Product Description"
+                                        value={formData.product.description}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            product: { ...prev.product, description: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Price ($)"
+                                        value={formData.product.price}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            product: { ...prev.product, price: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="number"
+                                        placeholder="Stock Quantity"
+                                        value={formData.product.stock}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            product: { ...prev.product, stock: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={createProduct}
+                                    disabled={loading.product}
+                                >
+                                    {loading.product ? <span className="loading"></span> : <i className="fas fa-plus"></i>}
+                                    {loading.product ? ' Creating...' : ' Create Product'}
+                                </button>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-list"></i> All Products ({products.length})</h3>
+                                <div className="data-list">
+                                    {products.map(product => (
+                                        <div key={product.id} className="data-item">
+                                            <div className="data-info">
+                                                <h4>{product.name}</h4>
+                                                <p>${product.price} • Stock: {product.stock} • ID: {product.id}</p>
+                                            </div>
+                                            <button 
+                                                className="btn btn-danger"
+                                                onClick={() => deleteItem('products', product.id)}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {products.length === 0 && (
+                                        <div className="data-item">
+                                            <div className="data-info">
+                                                <p>No products found. Create your first product!</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Order Service */}
+                        <div className="service-card order-service">
+                            <div className="service-header">
+                                <div className="service-icon">
+                                    <i className="fas fa-shopping-cart"></i>
+                                </div>
+                                <div className="service-title">Order Service</div>
+                                <div className={`status-indicator ${serviceStatus.orders ? 'status-online' : 'status-offline'}`}></div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-plus"></i> Create New Order</h3>
+                                <div className="form-group">
+                                    <select
+                                        value={formData.order.user_id}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            order: { ...prev.order, user_id: e.target.value }
+                                        }))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map(user => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.name} ({user.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <select
+                                        value={formData.order.product_id}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            order: { ...prev.order, product_id: e.target.value }
+                                        }))}
+                                    >
+                                        <option value="">Select Product</option>
+                                        {products.map(product => (
+                                            <option key={product.id} value={product.id}>
+                                                {product.name} (${product.price})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        placeholder="Quantity"
+                                        value={formData.order.quantity}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            order: { ...prev.order, quantity: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                                <button 
+                                    className="btn btn-success"
+                                    onClick={createOrder}
+                                    disabled={loading.order || users.length === 0 || products.length === 0}
+                                >
+                                    {loading.order ? <span className="loading"></span> : <i className="fas fa-shopping-cart"></i>}
+                                    {loading.order ? ' Creating...' : ' Create Order'}
+                                </button>
+                                {(users.length === 0 || products.length === 0) && (
+                                    <p style={{marginTop: '10px', color: '#e74c3c', fontSize: '12px'}}>
+                                        Create users and products first to enable orders
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="form-section">
+                                <h3><i className="fas fa-list"></i> All Orders ({orders.length})</h3>
+                                <div className="data-list">
+                                    {orders.map(order => (
+                                        <div key={order.id} className="data-item" style={{flexDirection: 'column', alignItems: 'stretch'}}>
+                                            <div className="order-details">
+                                                <h4>Order #{order.id}</h4>
+                                                <div className="order-meta">
+                                                    <span><strong>User:</strong> {order.user?.name || 'Unknown'}</span>
+                                                    <span><strong>Product:</strong> {order.product?.name || 'Unknown'}</span>
+                                                    <span><strong>Quantity:</strong> {order.quantity}</span>
+                                                    <span><strong>Total:</strong> ${order.total_price}</span>
+                                                    <span><strong>Status:</strong> {order.status}</span>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className="btn btn-danger"
+                                                onClick={() => deleteItem('orders', order.id)}
+                                                style={{alignSelf: 'flex-end', marginTop: '10px'}}
+                                            >
+                                                <i className="fas fa-trash"></i> Delete Order
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {orders.length === 0 && (
+                                        <div className="data-item">
+                                            <div className="data-info">
+                                                <p>No orders found. Create your first order to see microservices working together!</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
